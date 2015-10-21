@@ -57,14 +57,7 @@ public partial class Default : System.Web.UI.Page
         string concatenatedString = "";
 
         newWords = ShiftVowels(words);
-
-        for (int i = 0; i < newWords.Length; i++) {
-            if (i == 0) {
-                concatenatedString = newWords[i] + (int)newWords[newWords.Length - 1][0];
-            } else {
-                concatenatedString += newWords[i] + (int)newWords[i - 1][0];
-            }
-        }
+        concatenatedString = ConcatenateWithASCII(newWords);
 
         printWords(newWords, lblNewWords);
         lblConcatenatedWords.Text = concatenatedString;
