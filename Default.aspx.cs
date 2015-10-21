@@ -43,6 +43,9 @@ public partial class Default : System.Web.UI.Page
                 case "Thor":
                     lblEncodedString.Text = Thor(encriptionValues.words, encriptionValues.startingFibonacciNumber);
                     break;
+                case "CaptainAmerica":
+                    lblEncodedString.Text = CaptainAmerica(encriptionValues.words, encriptionValues.startingFibonacciNumber);
+                    break;
             }
         }
     }
@@ -109,7 +112,7 @@ public partial class Default : System.Web.UI.Page
 
         bool useUpper = Char.IsUpper(splittedWords[0][0]);
         StringBuilder splittedWord;
-        List<int> fibonacciSerie = GetFibonacciSerieUpTo(fibonacciNumber);
+        List<long> fibonacciSerie = GetFibonacciSerieUpTo(fibonacciNumber);
 
         for (int i = 0; i < splittedWords.Count; i++) {
             splittedWord = new StringBuilder(splittedWords[i]);
@@ -118,24 +121,67 @@ public partial class Default : System.Web.UI.Page
                     if (!IsVowel(splittedWord[j])) {
                         splittedWord[j] = (useUpper ? Char.ToUpper(splittedWord[j]) : Char.ToLower(splittedWord[j]));
                         useUpper = !useUpper;
-                    } else {
-                        fibonacciSerie.Add(fibonacciSerie[fibonacciSerie.Count - 1] + fibonacciSerie[fibonacciSerie.Count - 2]);
-                        splittedWord.Remove(j, 1);
-                        splittedWord.Insert(j, fibonacciSerie[fibonacciSerie.Count - 1].ToString());
-                    }
+                    } 
                 }
                 
             }
             splittedWords[i] = splittedWord.ToString();
-            concatenatedString += splittedWord.ToString() + (i == splittedWords.Count - 1 ? "" : "*");
         }
+        splittedWords = new List<string>(ReplaceVowelsWithFibonacci(splittedWords.ToArray(), fibonacciNumber));
+        concatenatedString = ConcatenateWithAsterisk(splittedWords.ToArray());
 
         lblConcatenatedWords.Text = concatenatedString;
         printWords(splittedWords.ToArray(), lblNewWords);
         return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(concatenatedString));
     }
-    private void CaptainAmerica(string[] words) {
-        
+    private string CaptainAmerica(string[] words, int fibonacciNumber) {
+        string[] newWords = ShiftVowels(words);
+        string concatenatedString;
+        Array.Sort(newWords);
+        Array.Reverse(newWords);
+        newWords = ReplaceVowelsWithFibonacci(newWords, fibonacciNumber);
+        concatenatedString = ConcatenateWithASCII(newWords);
+        lblConcatenatedWords.Text = concatenatedString;
+        printWords(newWords.ToArray(), lblNewWords);
+        return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(concatenatedString));
+    }
+
+    private string ConcatenateWithASCII(string[] words) {
+        string concatenatedString = "";
+        for (int i = 0; i < words.Length; i++) {
+            if (i == 0) {
+                concatenatedString = words[i] + (int)words[words.Length - 1][0];
+            } else {
+                concatenatedString += words[i] + (int)words[i - 1][0];
+            }
+        }
+        return concatenatedString;
+    }
+
+    private string ConcatenateWithAsterisk(string[] words) {
+        string concatenatedString = "";
+        for (int i = 0; i < words.Length; i++) {
+            concatenatedString += words[i] + (i == words.Length - 1 ? "" : "*");
+        }
+
+        return concatenatedString;
+    }
+
+    public string[] ReplaceVowelsWithFibonacci(string[] words, int fibonacciNumber) {
+        List<long> fibonacciSerie = GetFibonacciSerieUpTo(fibonacciNumber);
+
+        for (int i = 0; i < words.Length; i++) {
+            StringBuilder word = new StringBuilder(words[i]);
+            for (int j = 0; j < word.Length; j++) {
+                if (IsVowel(word[j])) {
+                    fibonacciSerie.Add(fibonacciSerie[fibonacciSerie.Count - 1] + fibonacciSerie[fibonacciSerie.Count - 2]);
+                    word.Remove(j, 1);
+                    word.Insert(j, fibonacciSerie[fibonacciSerie.Count - 1].ToString());
+                }
+            }
+            words[i] = word.ToString();
+        }
+        return words;
     }
 
     private string[] ShiftVowels(string[] words) {
@@ -177,14 +223,11 @@ public partial class Default : System.Web.UI.Page
         label.Text = label.Text.Remove(label.Text.Length - 2);
     }
 
-    private List<int> GetFibonacciSerieUpTo(int fibonacciNumber) {
-        List<int> fibonacciSerie = new List<int>();
+    private List<long> GetFibonacciSerieUpTo(int fibonacciNumber) {
+        List<long> fibonacciSerie = new List<long>();
 
-        int a = 0;
-        int b = 1;
-
-        fibonacciSerie.Add(a);
-        fibonacciSerie.Add(b);
+        fibonacciSerie.Add(0);
+        fibonacciSerie.Add(1);
 
         if (fibonacciNumber > 1) {
             while (fibonacciSerie[fibonacciSerie.Count - 1] < fibonacciNumber) {
