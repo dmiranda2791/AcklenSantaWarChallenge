@@ -71,9 +71,7 @@ public partial class Default : System.Web.UI.Page
         Array.Reverse(newWords);
         printWords(words, lblOrderedWords);
 
-        for (int i = 0; i < words.Length; i++) {
-            concatenatedString += newWords[i] + (i == newWords.Length - 1 ? "" : "*");
-        }
+        concatenatedString = ConcatenateWithAsterisk(newWords);
 
         printWords(newWords, lblNewWords);
         lblConcatenatedWords.Text = concatenatedString;
