@@ -26,6 +26,12 @@
         Concatenated Words: <asp:Label ID="lblConcatenatedWords" runat="server"></asp:Label>
         <br />
         Encoded String: <asp:Label ID="lblEncodedString" runat="server"></asp:Label>
+        <br /><br />
+        Success count:<asp:Label ID="lblSuccessCount" runat="server" Text="0"></asp:Label>
+        <br />
+        CrashAndBurn count:<asp:Label ID="lblCrashAndBurnCount" runat="server" Text="0"></asp:Label>
+        <br />
+        Winner count:<asp:Label ID="lblWinnerCount" runat="server" Text="0"></asp:Label>
         <br />
     </div>
     </form>

@@ -18,34 +18,53 @@ public partial class Default : System.Web.UI.Page
     private string[] ENGLISH_WORDS = {"drool", "cats", "clean", "code", "dogs", "materials", "needed", "this", "is", "hard", "what", "are"
                                             ,"you", "smoking", "shot", "gun", "down", "river", "super", "man", "rule", "acklen", "developers"
                                             , "are", "amazing"};
+    private const string MYEMAIL_ADDRESS = "daniel@acklenavenue.com";
+    private const string MYNAME = "Daniel Miranda";
+    private const string WEBHOOK_URL = "http://158f7473.ngrok.io/santawar/receivesecretphrase";
+    private const string REPO_URL = "https://github.com/dmiranda2791/AcklenSantaWarChallenge";
+    private const string STATUS_SUCCESS = "Success";
+    private const string STATUS_WINNER = "Winner";
+    private const string STATUS_CRASHANDBURN = "CrashAndBurn";
+    private const int ALGORITHMS_TO_EXCUTE = 20;
+    private List<KeyValuePair<String, EncriptionValues>> guidsUsed = new List<KeyValuePair<String, EncriptionValues>>();
+       
     protected void Page_Load(object sender, EventArgs e)
     {
-        Guid guid = Guid.NewGuid();
-        lblGuid.Text = guid.ToString();
-        request = WebRequest.Create(url + "values/" + guid.ToString()) as HttpWebRequest;
-        
-        if (request != null) {
-            HttpWebResponse response = (HttpWebResponse) request.GetResponse();
-            string responseStream = new StreamReader(response.GetResponseStream()).ReadToEnd();
-            JavaScriptSerializer deserializer = new JavaScriptSerializer();
-            EncriptionValues encriptionValues = deserializer.Deserialize<EncriptionValues>(responseStream);
-            lblAlgorithm.Text = encriptionValues.algorithm;
-            lblFibonacciNumber.Text = encriptionValues.startingFibonacciNumber.ToString();
-            printWords(encriptionValues.words, lblWords);
+        for (int i = 0; i < ALGORITHMS_TO_EXCUTE; i++) { 
+            string encodedString = "";
+            Guid guid = Guid.NewGuid();
+            lblGuid.Text = guid.ToString();
+            request = WebRequest.Create(url + "values/" + guid.ToString()) as HttpWebRequest;
+            if (request != null) {
+                HttpWebResponse response = (HttpWebResponse) request.GetResponse();
+                string responseStream = new StreamReader(response.GetResponseStream()).ReadToEnd();
+                JavaScriptSerializer deserializer = new JavaScriptSerializer();
+                EncriptionValues encriptionValues = deserializer.Deserialize<EncriptionValues>(responseStream);
+                lblAlgorithm.Text = encriptionValues.algorithm;
+                lblFibonacciNumber.Text = encriptionValues.startingFibonacciNumber.ToString();
+                printWords(encriptionValues.words, lblWords);
 
-            switch (encriptionValues.algorithm){
-                case "IronMan":
-                    lblEncodedString.Text = IronMan(encriptionValues.words);
-                    break;
-                case "TheIncredibleHulk":
-                    lblEncodedString.Text = TheIncredibleHulk(encriptionValues.words);
-                    break;
-                case "Thor":
-                    lblEncodedString.Text = Thor(encriptionValues.words, encriptionValues.startingFibonacciNumber);
-                    break;
-                case "CaptainAmerica":
-                    lblEncodedString.Text = CaptainAmerica(encriptionValues.words, encriptionValues.startingFibonacciNumber);
-                    break;
+                guidsUsed.Add(new KeyValuePair<String, EncriptionValues>(guid.ToString(), encriptionValues));
+
+                switch (encriptionValues.algorithm){
+                    case "IronMan":
+                        encodedString = IronMan(encriptionValues.words);
+                        lblEncodedString.Text = encodedString;
+                        break;
+                    case "TheIncredibleHulk":
+                        encodedString = TheIncredibleHulk(encriptionValues.words);
+                        lblEncodedString.Text = encodedString;
+                        break;
+                    case "Thor":
+                        encodedString = Thor(encriptionValues.words, encriptionValues.startingFibonacciNumber);
+                        lblEncodedString.Text = encodedString;
+                        break;
+                    case "CaptainAmerica":
+                        encodedString = CaptainAmerica(encriptionValues.words, encriptionValues.startingFibonacciNumber);
+                        lblEncodedString.Text = encodedString;
+                        break;
+                }
+                SendEncodedString(encodedString, guid.ToString(), encriptionValues.algorithm);
             }
         }
     }
@@ -79,23 +98,24 @@ public partial class Default : System.Web.UI.Page
     }
 
     public string Thor(string[] words, int fibonacciNumber) {
-        List<String> splittedWords = new List<String>(words);
+        List<String> splittedWords = new List<String>();
         string wordToSplit;
         string concatenatedString = "";
-        for (int i = 0; i < splittedWords.Count; i++) {
-            wordToSplit = splittedWords[i];
+        for (int i = 0; i < words.Length; i++) {
+            wordToSplit = words[i];
             int j = 0;
             while(j < ENGLISH_WORDS.Length && wordToSplit != "") {
 
                 if (wordToSplit.StartsWith(ENGLISH_WORDS[j], true, new CultureInfo("en-US"))) {
                     splittedWords.Add(wordToSplit.Substring(0, ENGLISH_WORDS[j].Length));
                     wordToSplit = wordToSplit.Remove(0, ENGLISH_WORDS[j].Length);
-                    if (wordToSplit == "") {
-                        splittedWords.RemoveAt(i);
-                    }
                     j = -1;
                 }
                 j++;
+            }
+
+            if (wordToSplit != "") {
+                splittedWords.Add(wordToSplit);
             }
         }
         splittedWords.Sort();
@@ -207,6 +227,7 @@ public partial class Default : System.Web.UI.Page
     }
 
     private void printWords(string[] words, Label label) {
+        label.Text = "";
         for (int i = 0; i < words.Length; i++) {
             label.Text += words[i] + ", ";
         }
@@ -229,9 +250,68 @@ public partial class Default : System.Web.UI.Page
         return fibonacciSerie;
     }
 
+    private void SendEncodedString(string encondedValue, string guid, string algorithmName) {
+        HttpWebRequest request;
+        HttpWebResponse response;
+        PostRequestEnconded requestContent = new PostRequestEnconded();
+        string serializedJsonContent;
+        byte[] contentBytes;
+
+        request =  WebRequest.Create(url + "values/" + guid + "/" + algorithmName) as HttpWebRequest;
+        request.Method = "POST";
+        request.ContentType = "application/json";
+        request.Accept = "application/json";
+
+        requestContent.encodedValue = encondedValue;
+        requestContent.emailAddress = MYEMAIL_ADDRESS;
+        requestContent.name = MYNAME;
+        requestContent.webhookUrl = WEBHOOK_URL;
+        requestContent.repoUrl = REPO_URL;
+
+        serializedJsonContent = new JavaScriptSerializer().Serialize(requestContent);
+        contentBytes = Encoding.ASCII.GetBytes(serializedJsonContent);
+        request.ContentLength = contentBytes.Length;
+
+        Stream dataStream = request.GetRequestStream();
+        dataStream.Write(contentBytes, 0, contentBytes.Length);
+        dataStream.Close();
+        try {
+            response = (HttpWebResponse)request.GetResponse();
+            string responseStream = new StreamReader(response.GetResponseStream()).ReadToEnd();
+            PostResponseEncoded postResponse = new JavaScriptSerializer().Deserialize<PostResponseEncoded>(responseStream);
+
+            switch (postResponse.status) {
+                case STATUS_SUCCESS:
+                    lblSuccessCount.Text = (Int32.Parse(lblSuccessCount.Text) + 1).ToString();
+                    break;
+                case STATUS_CRASHANDBURN:
+                    lblCrashAndBurnCount.Text = (Int32.Parse(lblCrashAndBurnCount.Text) + 1).ToString();
+                    break;
+                case STATUS_WINNER:
+                    lblWinnerCount.Text = (Int32.Parse(lblWinnerCount.Text) + 1).ToString();
+                    break;
+            }
+        } catch (WebException exc){
+            Console.WriteLine("hola");
+        }
+    }
+
     private class EncriptionValues {
         public string[] words{ get; set; }
         public int startingFibonacciNumber{ get; set; }
         public string algorithm{ get; set; }
+    }
+
+    private class PostRequestEnconded {
+        public string encodedValue { get; set; }
+        public string emailAddress { get; set; }
+        public string name { get; set; }
+        public string webhookUrl { get; set; }
+        public string repoUrl { get; set; }
+    }
+
+    private class PostResponseEncoded {
+        public string status { get; set; }
+        public string message {get; set;}
     }
 }
